@@ -18,7 +18,7 @@ class TestExecute(test_template.TestPlugin):
         )
         result = self.do_execution(
             ent_id="not_a_test_entity_to_allow_type_override",
-            entity_attrs={"file_format_legacy": "TEXT"},
+            entity_attrs={"file_format": "text/plain"},
             data_in=[("content", data)],
             verify_input_content=False,
         )
