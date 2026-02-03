@@ -277,3 +277,6 @@ tags
 node_modules/*
 package-lock.json
 package.json
+.ruff_cache
+# FUTURE UV IS USEFUL
+uv.lock
