@@ -25,7 +25,7 @@ class CustomBuildHook(BuildHookInterface):
 
         for package in npm_packages:
             logging.warning(f"Running command npm install {package}")
-            result = subprocess.run(["npm", "install", package], stderr=subprocess.PIPE)  # noqa: S603  # nosec: B603 B607
+            result = subprocess.run(["npm", "install", package], stderr=subprocess.PIPE)  # noqa: S603, S607
             if result.returncode != 0:
                 logging.warning(f"Failed to run command 'npm {package}' with error {result.stderr.decode()}")
                 sys.exit(-1)

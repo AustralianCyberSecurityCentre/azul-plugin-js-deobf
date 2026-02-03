@@ -89,7 +89,7 @@ class AzulPluginJsDeobf(BinaryPlugin):
             if bracket_structure == "":
                 return False
             else:
-                md5_hash = hashlib.md5((bracket_structure).encode("utf-8")).hexdigest()  # nosec B324
+                md5_hash = hashlib.md5((bracket_structure).encode("utf-8")).hexdigest()  # noqa: S324
                 return str(md5_hash)
         except Exception:
             return False
@@ -112,7 +112,7 @@ class AzulPluginJsDeobf(BinaryPlugin):
 
         try:
             minified = rjsmin.jsmin(text)
-            minified_hash = hashlib.md5((str(minified)).encode("utf-8")).hexdigest()  # nosec B324
+            minified_hash = hashlib.md5((str(minified)).encode("utf-8")).hexdigest()  # noqa: S324
             if minified_hash:
                 self.add_feature_values("js_minified_hash", str(minified_hash))
         except Exception as e:
@@ -134,11 +134,11 @@ class AzulPluginJsDeobf(BinaryPlugin):
 
         # Start processing.
         with tempfile.NamedTemporaryFile("rb") as sync_file:
-            result_sync = subprocess.run(
+            result_sync = subprocess.run(  # noqa: S603
                 [synchrony_path, src_file, "-o", sync_file.name],
                 stderr=subprocess.PIPE,
                 stdout=subprocess.DEVNULL,
-            )  # nosec B603
+            )
 
             if result_sync.returncode != 0:
                 decoded_std_err = result_sync.stderr.decode()
@@ -153,11 +153,11 @@ class AzulPluginJsDeobf(BinaryPlugin):
                     )
 
             with tempfile.NamedTemporaryFile("rb") as restring_file:
-                result_restring = subprocess.run(
+                result_restring = subprocess.run(  # noqa: S603
                     [restringer_path, sync_file.name, "-o", restring_file.name],
                     stderr=subprocess.PIPE,
                     stdout=subprocess.PIPE,
-                )  # nosec B603
+                )
 
                 # If restringer failed return the synchrony result
                 # Restringer can fail and return a code of 0 but have an output file of size 0 and stdout has the error
