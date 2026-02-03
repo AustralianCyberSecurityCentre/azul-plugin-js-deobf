@@ -19,7 +19,7 @@ class CustomBuildHook(BuildHookInterface):
         logging.warning(f"Installing the following npm packages {npm_packages}")
 
         current_dir = os.getcwd()
-        node_module_dir = os.path.join(sys.prefix, "bin", "node_modules")
+        node_module_dir = os.path.join(sys.base_prefix, "bin", "node_modules")
         os.makedirs(node_module_dir, exist_ok=True)
         os.chdir(node_module_dir)
 
@@ -29,5 +29,4 @@ class CustomBuildHook(BuildHookInterface):
             if result.returncode != 0:
                 logging.warning(f"Failed to run command 'npm {package}' with error {result.stderr.decode()}")
                 sys.exit(-1)
-
         os.chdir(current_dir)
