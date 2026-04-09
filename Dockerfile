@@ -28,15 +28,15 @@ RUN apt-get update && \
     $(grep -vE "^\s*(#|$)" /tmp/src/debian.txt | tr "\n" " ") && \
     rm -rf /tmp/src/debian.txt /var/lib/apt/lists/*
 
-    # Install new npm and node js
+# Install new npm and node js
 RUN mkdir -p /etc/apt/keyrings
 RUN apt-get install -y --no-install-recommends gpg curl
 RUN curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
 # Desired node version
-ENV NODE_MAJOR=22
+ENV NODE_MAJOR=24
 RUN echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" > /etc/apt/sources.list.d/nodesource.list
 RUN apt-get update && \
-    apt-get install -y nodejs  && \
+    apt-get install -y nodejs && \
     npm install -g npm 
 
 # copy all files not in .dockerignore
@@ -60,6 +60,9 @@ RUN if [ "$GIT_BRANCH_NAME" = "refs/heads/dev" ] ; then \
     uv pip freeze | grep 'azul-.*==' | grep -v '^azul-plugin-js-deobf' | cut -d "=" -f 1 | xargs -I {} uv pip install --extra-index-url=$UV_INDEX_URL --system --upgrade --no-deps '{}>=0.0.0'\
     ;fi
 
+# try to delete tests that trigger av detections
+RUN rm -r /usr/local/bin/node_modules/restringer/tests/resources || echo
+
 FROM $REGISTRY/$BASE_IMAGE:$BASE_TAG AS base
 ENV DEBIAN_FRONTEND=noninteractive
 COPY debian.txt /tmp/src/
@@ -71,13 +74,13 @@ RUN apt-get update && \
 
 # Install new npm and node js
 RUN mkdir -p /etc/apt/keyrings
-RUN apt-get update && apt-get install -y gpg curl
+RUN apt-get update && apt-get install -y --no-install-recommends gpg curl
 RUN curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
 # Desired node version
-ENV NODE_MAJOR=22
+ENV NODE_MAJOR=24
 RUN echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" > /etc/apt/sources.list.d/nodesource.list
 RUN apt-get update && \
-    apt-get install -y nodejs  && \
+    apt-get install -y nodejs && \
     npm install -g npm
 
 ARG UID=21000
