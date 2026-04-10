@@ -54,11 +54,11 @@ RUN uv pip uninstall --system azul-plugin-js-deobf
 RUN uv pip install --system --no-deps --find-links /tmp/ azul-plugin-js-deobf==$(hatchling version)
 
 # Upgrade to dev azul dependencies or upgrade non-dev azul dependencies depending on branch.
-RUN if [ "$GIT_BRANCH_NAME" = "refs/heads/dev" ] ; then \
-    uv pip freeze | grep 'azul-.*==' | grep -v '^azul-plugin-js-deobf' | cut -d "=" -f 1 | xargs -I {} uv pip install --extra-index-url=$UV_INDEX_URL --system --upgrade --no-deps --prerelease allow '{}>=0.0.0-dev' \
+RUN if [ "$GIT_BRANCH_NAME" = "refs/heads/dev" ]; then \
+    uv pip freeze | grep 'azul-.*==' | grep -v '^azul-plugin-js-deobf' | cut -d "=" -f 1 | xargs -I {} uv pip install --extra-index-url=$UV_INDEX_URL --system --upgrade --no-deps --prerelease allow '{}>=0.0.0-dev'; \
     else \
-    uv pip freeze | grep 'azul-.*==' | grep -v '^azul-plugin-js-deobf' | cut -d "=" -f 1 | xargs -I {} uv pip install --extra-index-url=$UV_INDEX_URL --system --upgrade --no-deps '{}>=0.0.0'\
-    ;fi
+    uv pip freeze | grep 'azul-.*==' | grep -v '^azul-plugin-js-deobf' | cut -d "=" -f 1 | xargs -I {} uv pip install --extra-index-url=$UV_INDEX_URL --system --upgrade --no-deps '{}>=0.0.0'; \
+    fi
 
 # try to delete tests that trigger av detections
 RUN rm -r /usr/local/bin/node_modules/restringer/tests/resources || echo
