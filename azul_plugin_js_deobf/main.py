@@ -98,6 +98,7 @@ class AzulPluginJsDeobf(BinaryPlugin):
         """Run the plugin."""
         src_file = job.get_data().get_filepath()
         text = job.get_data().read()
+
         # Parsing js file and attempting to return features.
         # note: rjsmin will 'minify' any string, stream of bytes, etc.
         # therefore, it is relying on the plugin settings to filter for JavaScript files.
@@ -119,59 +120,48 @@ class AzulPluginJsDeobf(BinaryPlugin):
             self.logger.warning(f"Error while finding js_minified_hash: {e}")
 
         # Check if the npm binaries are present and locate their path
-        # Path is actually found from node_modules/.bin/synchrony but that is a symlink which breaks in python pkg.
-        synchrony_path = find_executable(
-            os.path.join(self.node_module_path, "deobfuscator", "dist", "cli.js"), extra_paths="."
+        # Path is actually found from node_modules/.bin/webcrack but that is a symlink which breaks in python pkg.
+        webcrack_path = find_executable(
+            os.path.join(self.node_module_path, "webcrack", "src", "cli-wrapper.js"),
+            extra_paths=".",
         )
-        if not os.path.exists(synchrony_path):
-            raise Exception(f"Synchrony cannot be found at the path {synchrony_path}")
-        # Path is actually found from node_modules/.bin/restringer but that is a symlink which breaks in python pkg.
-        restringer_path = find_executable(
-            os.path.join(self.node_module_path, "restringer", "bin", "deobfuscate.js"), extra_paths="."
-        )
-        if not os.path.exists(restringer_path):
-            raise Exception(f"Restringer cannot be found at the path {restringer_path}")
+        if not os.path.exists(webcrack_path):
+            raise Exception(f"Webcrack cannot be found at the path {webcrack_path}")
 
-        # Start processing.
-        with tempfile.NamedTemporaryFile("rb") as sync_file:
-            result_sync = subprocess.run(  # noqa: S603
-                [synchrony_path, src_file, "-o", sync_file.name],
+        with tempfile.NamedTemporaryFile("rb") as webcrack_file:
+            # Kept getting `too many argument` errors when running it through a list
+            command = f"{webcrack_path} {src_file} > {webcrack_file.file.name}"
+            result = subprocess.run(  # noqa: S602
+                command,
                 stderr=subprocess.PIPE,
-                stdout=subprocess.DEVNULL,
+                stdout=subprocess.PIPE,
+                shell=True,
             )
 
-            if result_sync.returncode != 0:
-                decoded_std_err = result_sync.stderr.decode()
-                if "SyntaxError:" in decoded_std_err:
-                    return State(State.Label.OPT_OUT, message="Not a Javascript file opting out.")
-                # Failure case when there is too much recursion in the synchrony library.
-                if "RangeError: Maximum call stack size exceeded" in decoded_std_err:
+            if result.returncode != 0:
+                decoded_err = result.stderr.decode("utf-8")
+
+                if "SyntaxError: " in decoded_err:
                     return State(
-                        State.Label.COMPLETED_WITH_ERRORS,
-                        failure_name="Synchrony failed too much recursion",
-                        message=decoded_std_err,
+                        State.Label.ERROR_RUNNER,
+                        message="Not a Javascript file, opting out.",
                     )
 
-            with tempfile.NamedTemporaryFile("rb") as restring_file:
-                result_restring = subprocess.run(  # noqa: S603
-                    [restringer_path, sync_file.name, "-o", restring_file.name],
-                    stderr=subprocess.PIPE,
-                    stdout=subprocess.PIPE,
+                # Handle new errors here as they appear
+                return State(
+                    State.Label.ERROR_RUNNER,
+                    message=f"Failed with error:\n{decoded_err}",
                 )
 
-                # If restringer failed return the synchrony result
-                # Restringer can fail and return a code of 0 but have an output file of size 0 and stdout has the error
-                # This is why the file length is checked.
-                if result_restring.returncode != 0 or os.stat(restring_file.name).st_size == 0:
-                    self.logger.warning(
-                        f"Restringer failed, using synchrony output, stderr is: '{result_restring.stderr.decode()}'"
-                        + f"\nstdout is: {result_restring.stdout.decode()}"
-                    )
-                    if self.is_file_got_multiplelines(sync_file):
-                        self._add_js_file(sync_file, "Synchrony")
-                    return
-                if self.is_file_got_multiplelines(restring_file):
-                    self._add_js_file(restring_file, "Restringer")
+            if os.stat(webcrack_file.name).st_size == 0:
+                self.logger.warning("Webcrack produced file of 0 size, not posting.")
+                return
+
+            if not self.is_file_got_multiplelines(webcrack_file):
+                self.logger.warning("Webcracker produced a single line file, not posting.")
+                return
+
+            self._add_js_file(webcrack_file, "Webcrack")
 
 
 def main():

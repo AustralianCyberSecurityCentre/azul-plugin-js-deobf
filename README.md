@@ -6,8 +6,7 @@ Deobfuscates JavaScript to make it more human readable.
 
 ```bash
 # Require install of npm packages seperately.
-npm install deobfuscator
-npm install restringer
+npm install webcrack
 
 # Python package install
 pip install azul-plugin-js-deobf
@@ -15,8 +14,7 @@ pip install azul-plugin-js-deobf
 
 ## Npm Packages
 
-deobfuscator - https://github.com/relative/synchrony
-restringer - https://github.com/PerimeterX/restringer/tree/main
+webcrack - https://github.com/j4k0xb/webcrack
 
 ## Usage
 
