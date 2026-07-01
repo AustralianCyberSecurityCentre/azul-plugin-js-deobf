@@ -61,7 +61,7 @@ class TestExecute(test_template.TestPlugin):
         result = self.do_execution(data_in=[("content", data)], verify_input_content=False)
         self.assertJobResult(
             result,
-            JobResult(state=State(State.Label.OPT_OUT, message="Not a Javascript file opting out.")),
+            JobResult(state=State(State.Label.OPT_OUT, message="Not a Javascript file, opting out.")),
         )
 
     def test_webcrack_fails_to_deob(self):

@@ -143,7 +143,7 @@ class AzulPluginJsDeobf(BinaryPlugin):
 
                 if "SyntaxError: " in decoded_err:
                     return State(
-                        State.Label.ERROR_RUNNER,
+                        State.Label.OPT_OUT,
                         message="Not a Javascript file, opting out.",
                     )
 
