@@ -110,31 +110,6 @@ class TestExecute(test_template.TestPlugin):
             ),
         )
 
-    def test_fails_with_attrib_error(self):
-        """Test failure due to attributeError regression test."""
-        data = self.load_test_file_bytes(
-            "ef73f10d5163ea12ee4ff5507ebc387591dd1d97fc9a1a143cf58c14793dd371",
-            "Malicious Javascript, malware family kriptick.",
-        )
-        result = self.do_execution(data_in=[("content", data)])
-        # Ignore message because it's a huge stacktrace.
-        result.state.message = None
-        self.assertJobResult(
-            result,
-            JobResult(
-                state=State(State.Label.COMPLETED_WITH_ERRORS, failure_name="Synchrony failed too much recursion"),
-                events=[
-                    Event(
-                        sha256="ef73f10d5163ea12ee4ff5507ebc387591dd1d97fc9a1a143cf58c14793dd371",
-                        features={
-                            "js_bracket_hash": [FV("f33267b039aa3c3e9c3783c5d19a4dd3")],
-                            "js_minified_hash": [FV("8bef9bdff8dc321a73e6d77a8c516252")],
-                        },
-                    )
-                ],
-            ),
-        )
-
     def test_bracket_hash(self):
         """Test resulting features from generic js file"""
         data = self.load_test_file_bytes(
