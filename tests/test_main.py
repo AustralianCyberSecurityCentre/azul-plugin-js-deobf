@@ -127,7 +127,7 @@ class TestExecute(test_template.TestPlugin):
                         sha256="ecb916133a9376911f10bc5c659952eb0031e457f5df367cde560edbfba38fb8",
                         data=[
                             EventData(
-                                #hash="e847c61ce65de33fe33c87913767deb29cda09e44bfdce3a617db68ec20c879c",
+                                # hash="e847c61ce65de33fe33c87913767deb29cda09e44bfdce3a617db68ec20c879c",
                                 hash="a6b6abe891050c229273fe016a26389282f5f024d8769a1f2be2aebb0e357ebb",
                                 label="deob_js",
                             )
@@ -138,7 +138,7 @@ class TestExecute(test_template.TestPlugin):
                         },
                     )
                 ],
-                #data={"e847c61ce65de33fe33c87913767deb29cda09e44bfdce3a617db68ec20c879c": b""},
+                # data={"e847c61ce65de33fe33c87913767deb29cda09e44bfdce3a617db68ec20c879c": b""},
                 data={"a6b6abe891050c229273fe016a26389282f5f024d8769a1f2be2aebb0e357ebb": b""},
             ),
         )
