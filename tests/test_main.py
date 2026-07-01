@@ -24,7 +24,7 @@ class TestExecute(test_template.TestPlugin):
         )
         self.assertJobResult(
             result,
-            JobResult(state=State(State.Label.OPT_OUT, message="Not a Javascript file opting out.")),
+            JobResult(state=State(State.Label.OPT_OUT, message="Not a Javascript file, opting out.")),
         )
 
     def test_execute(self):
