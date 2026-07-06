@@ -143,6 +143,15 @@ class AzulPluginJsDeobf(BinaryPlugin):
             )
             webcrack_file.seek(0)
 
+            # try rerun without JSX if theres an errror - only testing for now
+            if b"JSX" in result.stderr and result.returncode != 0:
+                result = subprocess.run (  # noqa: S603
+                    [webcrack_path, src_file, "--no-jsx"],
+                    stdout=webcrack_file,
+                    stderr=subprocess.PIPE,
+                )
+                webcrack_file.seek(0)
+
             if result.returncode != 0:
                 decoded_err = result.stderr.decode("utf-8")
 
