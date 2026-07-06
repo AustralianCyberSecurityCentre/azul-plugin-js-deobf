@@ -70,15 +70,22 @@ class AzulPluginJsDeobf(BinaryPlugin):
         file_ref.seek(0)
         self.add_data_file(DataLabel.DEOB_JS, {}, file_ref)
 
-    def is_file_got_multiplelines(self, fileObj: tempfile._TemporaryFileWrapper) -> bool:
-        """Check deobfuscated file has at least one newline and return false if it doesn't."""
+    def is_file_valid(self, fileObj: tempfile._TemporaryFileWrapper) -> bool:
+        """Check deobfuscated file has at least one newline, and has content. Return false if it doesn't."""
         # If the first line is longer than 10kb it's probably not useful anyway.
         # Note the number parameter in readlines() is the number of bytes before the code stops searching for newlines.
-        num_lines = len(fileObj.readlines(10000))
+        file_data = fileObj.readlines(10_000)
         fileObj.seek(0)
+        
+        num_lines = len(file_data)
         if num_lines == 1:
-            return False
-        return True
+            return False, "single line file"
+        
+        file_bytes = len(file_data[0])
+        if file_bytes == 0:
+            return False, "0 file length"
+        
+        return True, None
 
     def get_bracket_hash(self, file) -> str:
         """Using a regular expression, determine the bracket layout of a file."""
@@ -134,6 +141,7 @@ class AzulPluginJsDeobf(BinaryPlugin):
                 stdout=webcrack_file,
                 stderr=subprocess.PIPE,
             )
+            webcrack_file.seek(0)
 
             if result.returncode != 0:
                 decoded_err = result.stderr.decode("utf-8")
@@ -156,12 +164,9 @@ class AzulPluginJsDeobf(BinaryPlugin):
                     message=f"Failed with error:\n{decoded_err}",
                 )
 
-            if os.stat(webcrack_file.name).st_size == 0:
-                self.logger.warning("Webcrack produced file of 0 size, not posting.")
-                return
-
-            if not self.is_file_got_multiplelines(webcrack_file):
-                self.logger.warning("Webcracker produced a single line file, not posting.")
+            file_valid = self.is_file_valid(webcrack_file)
+            if not file_valid[0]:
+                self.logger.warning(f"Webcracker output failed validation: {file_valid[1]}.")
                 return
 
             self._add_js_file(webcrack_file, "Webcrack")
