@@ -129,13 +129,10 @@ class AzulPluginJsDeobf(BinaryPlugin):
             raise Exception(f"Webcrack cannot be found at the path {webcrack_path}")
 
         with tempfile.NamedTemporaryFile("rb") as webcrack_file:
-            # Kept getting `too many argument` errors when running it through a list
-            command = f"{webcrack_path} {src_file} > {webcrack_file.file.name}"
-            result = subprocess.run(  # noqa: S602
-                command,
+            result = subprocess.run (
+                [ webcrack_path, src_file ],
+                stdout=webcrack_file,
                 stderr=subprocess.PIPE,
-                stdout=subprocess.PIPE,
-                shell=True,
             )
 
             if result.returncode != 0:
