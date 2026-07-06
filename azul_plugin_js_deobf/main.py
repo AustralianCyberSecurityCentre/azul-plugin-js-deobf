@@ -76,15 +76,15 @@ class AzulPluginJsDeobf(BinaryPlugin):
         # Note the number parameter in readlines() is the number of bytes before the code stops searching for newlines.
         file_data = fileObj.readlines(10_000)
         fileObj.seek(0)
-        
+
         num_lines = len(file_data)
         if num_lines == 1:
             return False, "single line file"
-        
+
         file_bytes = len(file_data[0])
         if file_bytes == 0:
             return False, "0 file length"
-        
+
         return True, None
 
     def get_bracket_hash(self, file) -> str:
@@ -136,8 +136,8 @@ class AzulPluginJsDeobf(BinaryPlugin):
             raise Exception(f"Webcrack cannot be found at the path {webcrack_path}")
 
         with tempfile.NamedTemporaryFile("rb") as webcrack_file:
-            result = subprocess.run (
-                [ webcrack_path, src_file ],
+            result = subprocess.run(
+                [webcrack_path, src_file],
                 stdout=webcrack_file,
                 stderr=subprocess.PIPE,
             )
