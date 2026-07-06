@@ -136,7 +136,7 @@ class AzulPluginJsDeobf(BinaryPlugin):
             raise Exception(f"Webcrack cannot be found at the path {webcrack_path}")
 
         with tempfile.NamedTemporaryFile("rb") as webcrack_file:
-            result = subprocess.run(
+            result = subprocess.run(  # noqa: S603
                 [webcrack_path, src_file],
                 stdout=webcrack_file,
                 stderr=subprocess.PIPE,
