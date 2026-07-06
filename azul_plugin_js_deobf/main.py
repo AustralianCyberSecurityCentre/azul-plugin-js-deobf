@@ -144,6 +144,12 @@ class AzulPluginJsDeobf(BinaryPlugin):
                         message="Not a Javascript file, opting out.",
                     )
 
+                if "JavaScript heap out of memory" in decoded_err:
+                    return State(
+                        State.Label.ERROR_RUNNER,
+                        message="Ran out of memory.",
+                    )
+
                 # Handle new errors here as they appear
                 return State(
                     State.Label.ERROR_RUNNER,
