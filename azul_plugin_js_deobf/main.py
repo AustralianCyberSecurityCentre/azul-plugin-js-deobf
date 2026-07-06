@@ -41,7 +41,7 @@ class BadNpmPackagePath(Exception):
 class AzulPluginJsDeobf(BinaryPlugin):
     """Deobfuscates JavaScript to make it more human readable."""
 
-    VERSION = "2026.07.01"
+    VERSION = "2026.07.06"
     SETTINGS = add_settings(
         filter_max_content_size=(int, 10 * 1024 * 1024),  # File size to process
         run_timeout=(int, 60 * 5),  # sometimes this takes a long time.
