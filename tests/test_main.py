@@ -65,8 +65,7 @@ class TestExecute(test_template.TestPlugin):
         )
 
     def test_webcrack_fails_to_deob(self):
-        """Test can have synchrony generate output and resync fail and still get output."""
-        # not sure if this test will stay right now but altering it to see how it goes and edit acordingly
+        """Test if webcrack fails to deobfuscate this sample file."""
         data = self.load_test_file_bytes(
             "dd8c1108346f4d27e092ce03cafcf7ef8ae743214430ed00906dcb8f88496a79", "Javascript that breaks resync."
         )
