@@ -55,6 +55,11 @@ class AzulPluginJsDeobf(BinaryPlugin):
             desc="MD5 of JavaScript after being minified",
             type=FeatureType.String,
         ),
+        Feature(
+            "no_jsx_parsed",
+            desc="True/False value to indicate if --no-jsx was parsed.",
+            type=FeatureType.String,
+        ),
     ]
 
     node_module_path = os.path.join("node_modules")
@@ -143,7 +148,7 @@ class AzulPluginJsDeobf(BinaryPlugin):
             )
             webcrack_file.seek(0)
 
-            # try rerun without JSX if theres an errror - only testing for now
+            # If there is an error that mentions JSX, try rerunning without JSX
             if b"JSX" in result.stderr and result.returncode != 0:
                 result = subprocess.run(  # noqa: S603
                     [webcrack_path, src_file, "--no-jsx"],
@@ -151,6 +156,7 @@ class AzulPluginJsDeobf(BinaryPlugin):
                     stderr=subprocess.PIPE,
                 )
                 webcrack_file.seek(0)
+                self.add_feature_values("no_jsx_parsed", "true")
 
             if result.returncode != 0:
                 decoded_err = result.stderr.decode("utf-8")
