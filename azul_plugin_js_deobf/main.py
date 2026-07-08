@@ -41,7 +41,7 @@ class BadNpmPackagePath(Exception):
 class AzulPluginJsDeobf(BinaryPlugin):
     """Deobfuscates JavaScript to make it more human readable."""
 
-    VERSION = "2025.10.01"
+    VERSION = "2026.07.07"
     SETTINGS = add_settings(
         filter_max_content_size=(int, 10 * 1024 * 1024),  # File size to process
         run_timeout=(int, 60 * 5),  # sometimes this takes a long time.
@@ -53,6 +53,11 @@ class AzulPluginJsDeobf(BinaryPlugin):
         Feature(
             "js_minified_hash",
             desc="MD5 of JavaScript after being minified",
+            type=FeatureType.String,
+        ),
+        Feature(
+            "no_jsx_parsed",
+            desc="True/False value to indicate if --no-jsx was parsed.",
             type=FeatureType.String,
         ),
     ]
@@ -70,15 +75,22 @@ class AzulPluginJsDeobf(BinaryPlugin):
         file_ref.seek(0)
         self.add_data_file(DataLabel.DEOB_JS, {}, file_ref)
 
-    def is_file_got_multiplelines(self, fileObj: tempfile._TemporaryFileWrapper) -> bool:
-        """Check deobfuscated file has at least one newline and return false if it doesn't."""
+    def is_file_valid(self, fileObj: tempfile._TemporaryFileWrapper) -> bool:
+        """Check deobfuscated file has at least one newline, and has content. Return false if it doesn't."""
         # If the first line is longer than 10kb it's probably not useful anyway.
         # Note the number parameter in readlines() is the number of bytes before the code stops searching for newlines.
-        num_lines = len(fileObj.readlines(10000))
+        file_data = fileObj.readlines(10_000)
         fileObj.seek(0)
+
+        num_lines = len(file_data)
         if num_lines == 1:
-            return False
-        return True
+            return False, "single line file"
+
+        file_bytes = len(file_data[0])
+        if file_bytes == 0:
+            return False, "0 file length"
+
+        return True, None
 
     def get_bracket_hash(self, file) -> str:
         """Using a regular expression, determine the bracket layout of a file."""
@@ -98,6 +110,7 @@ class AzulPluginJsDeobf(BinaryPlugin):
         """Run the plugin."""
         src_file = job.get_data().get_filepath()
         text = job.get_data().read()
+
         # Parsing js file and attempting to return features.
         # note: rjsmin will 'minify' any string, stream of bytes, etc.
         # therefore, it is relying on the plugin settings to filter for JavaScript files.
@@ -119,59 +132,59 @@ class AzulPluginJsDeobf(BinaryPlugin):
             self.logger.warning(f"Error while finding js_minified_hash: {e}")
 
         # Check if the npm binaries are present and locate their path
-        # Path is actually found from node_modules/.bin/synchrony but that is a symlink which breaks in python pkg.
-        synchrony_path = find_executable(
-            os.path.join(self.node_module_path, "deobfuscator", "dist", "cli.js"), extra_paths="."
+        # Path is actually found from node_modules/.bin/webcrack but that is a symlink which breaks in python pkg.
+        webcrack_path = find_executable(
+            os.path.join(self.node_module_path, "webcrack", "src", "cli-wrapper.js"),
+            extra_paths=".",
         )
-        if not os.path.exists(synchrony_path):
-            raise Exception(f"Synchrony cannot be found at the path {synchrony_path}")
-        # Path is actually found from node_modules/.bin/restringer but that is a symlink which breaks in python pkg.
-        restringer_path = find_executable(
-            os.path.join(self.node_module_path, "restringer", "bin", "deobfuscate.js"), extra_paths="."
-        )
-        if not os.path.exists(restringer_path):
-            raise Exception(f"Restringer cannot be found at the path {restringer_path}")
+        if not os.path.exists(webcrack_path):
+            raise Exception(f"Webcrack cannot be found at the path {webcrack_path}")
 
-        # Start processing.
-        with tempfile.NamedTemporaryFile("rb") as sync_file:
-            result_sync = subprocess.run(  # noqa: S603
-                [synchrony_path, src_file, "-o", sync_file.name],
+        with tempfile.NamedTemporaryFile("rb") as webcrack_file:
+            result = subprocess.run(  # noqa: S603
+                [webcrack_path, src_file],
+                stdout=webcrack_file,
                 stderr=subprocess.PIPE,
-                stdout=subprocess.DEVNULL,
             )
+            webcrack_file.seek(0)
 
-            if result_sync.returncode != 0:
-                decoded_std_err = result_sync.stderr.decode()
-                if "SyntaxError:" in decoded_std_err:
-                    return State(State.Label.OPT_OUT, message="Not a Javascript file opting out.")
-                # Failure case when there is too much recursion in the synchrony library.
-                if "RangeError: Maximum call stack size exceeded" in decoded_std_err:
+            # If there is an error that mentions JSX, try rerunning without JSX
+            if b"JSX" in result.stderr and result.returncode != 0:
+                result = subprocess.run(  # noqa: S603
+                    [webcrack_path, src_file, "--no-jsx"],
+                    stdout=webcrack_file,
+                    stderr=subprocess.PIPE,
+                )
+                webcrack_file.seek(0)
+                self.add_feature_values("no_jsx_parsed", "true")
+
+            if result.returncode != 0:
+                decoded_err = result.stderr.decode("utf-8")
+
+                if "SyntaxError: " in decoded_err:
                     return State(
-                        State.Label.COMPLETED_WITH_ERRORS,
-                        failure_name="Synchrony failed too much recursion",
-                        message=decoded_std_err,
+                        State.Label.OPT_OUT,
+                        message="Not a Javascript file, opting out.",
                     )
 
-            with tempfile.NamedTemporaryFile("rb") as restring_file:
-                result_restring = subprocess.run(  # noqa: S603
-                    [restringer_path, sync_file.name, "-o", restring_file.name],
-                    stderr=subprocess.PIPE,
-                    stdout=subprocess.PIPE,
+                if "JavaScript heap out of memory" in decoded_err:
+                    return State(
+                        State.Label.ERROR_RUNNER,
+                        message="Ran out of memory.",
+                    )
+
+                # Handle new errors here as they appear
+                return State(
+                    State.Label.ERROR_RUNNER,
+                    message=f"Failed with error:\n{decoded_err}",
                 )
 
-                # If restringer failed return the synchrony result
-                # Restringer can fail and return a code of 0 but have an output file of size 0 and stdout has the error
-                # This is why the file length is checked.
-                if result_restring.returncode != 0 or os.stat(restring_file.name).st_size == 0:
-                    self.logger.warning(
-                        f"Restringer failed, using synchrony output, stderr is: '{result_restring.stderr.decode()}'"
-                        + f"\nstdout is: {result_restring.stdout.decode()}"
-                    )
-                    if self.is_file_got_multiplelines(sync_file):
-                        self._add_js_file(sync_file, "Synchrony")
-                    return
-                if self.is_file_got_multiplelines(restring_file):
-                    self._add_js_file(restring_file, "Restringer")
+            file_valid = self.is_file_valid(webcrack_file)
+            if not file_valid[0]:
+                self.logger.warning(f"Webcracker output failed validation: {file_valid[1]}.")
+                return
+
+            self._add_js_file(webcrack_file, "Webcrack")
 
 
 def main():

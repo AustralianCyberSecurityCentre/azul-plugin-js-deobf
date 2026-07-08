@@ -24,7 +24,7 @@ class TestExecute(test_template.TestPlugin):
         )
         self.assertJobResult(
             result,
-            JobResult(state=State(State.Label.OPT_OUT, message="Not a Javascript file opting out.")),
+            JobResult(state=State(State.Label.OPT_OUT, message="Not a Javascript file, opting out.")),
         )
 
     def test_execute(self):
@@ -61,11 +61,11 @@ class TestExecute(test_template.TestPlugin):
         result = self.do_execution(data_in=[("content", data)], verify_input_content=False)
         self.assertJobResult(
             result,
-            JobResult(state=State(State.Label.OPT_OUT, message="Not a Javascript file opting out.")),
+            JobResult(state=State(State.Label.OPT_OUT, message="Not a Javascript file, opting out.")),
         )
 
-    def test_restringer_fails_to_deob(self):
-        """Test can have synchrony generate output and resync fail and still get output."""
+    def test_webcrack_fails_to_deob(self):
+        """Test if webcrack fails to deobfuscate this sample file."""
         data = self.load_test_file_bytes(
             "dd8c1108346f4d27e092ce03cafcf7ef8ae743214430ed00906dcb8f88496a79", "Javascript that breaks resync."
         )
@@ -109,31 +109,6 @@ class TestExecute(test_template.TestPlugin):
             ),
         )
 
-    def test_fails_with_attrib_error(self):
-        """Test failure due to attributeError regression test."""
-        data = self.load_test_file_bytes(
-            "ef73f10d5163ea12ee4ff5507ebc387591dd1d97fc9a1a143cf58c14793dd371",
-            "Malicious Javascript, malware family kriptick.",
-        )
-        result = self.do_execution(data_in=[("content", data)])
-        # Ignore message because it's a huge stacktrace.
-        result.state.message = None
-        self.assertJobResult(
-            result,
-            JobResult(
-                state=State(State.Label.COMPLETED_WITH_ERRORS, failure_name="Synchrony failed too much recursion"),
-                events=[
-                    Event(
-                        sha256="ef73f10d5163ea12ee4ff5507ebc387591dd1d97fc9a1a143cf58c14793dd371",
-                        features={
-                            "js_bracket_hash": [FV("f33267b039aa3c3e9c3783c5d19a4dd3")],
-                            "js_minified_hash": [FV("8bef9bdff8dc321a73e6d77a8c516252")],
-                        },
-                    )
-                ],
-            ),
-        )
-
     def test_bracket_hash(self):
         """Test resulting features from generic js file"""
         data = self.load_test_file_bytes(
@@ -151,7 +126,7 @@ class TestExecute(test_template.TestPlugin):
                         sha256="ecb916133a9376911f10bc5c659952eb0031e457f5df367cde560edbfba38fb8",
                         data=[
                             EventData(
-                                hash="e847c61ce65de33fe33c87913767deb29cda09e44bfdce3a617db68ec20c879c",
+                                hash="a6b6abe891050c229273fe016a26389282f5f024d8769a1f2be2aebb0e357ebb",
                                 label="deob_js",
                             )
                         ],
@@ -161,6 +136,6 @@ class TestExecute(test_template.TestPlugin):
                         },
                     )
                 ],
-                data={"e847c61ce65de33fe33c87913767deb29cda09e44bfdce3a617db68ec20c879c": b""},
+                data={"a6b6abe891050c229273fe016a26389282f5f024d8769a1f2be2aebb0e357ebb": b""},
             ),
         )
