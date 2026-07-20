@@ -64,18 +64,17 @@ class AzulPluginJsDeobf(BinaryPlugin):
 
     node_module_path = os.path.join("node_modules")
 
-    def _add_js_file(self, file_ref: tempfile._TemporaryFileWrapper, deob_tool_name: str) -> bool:
+    def _add_js_file(self, file_ref: tempfile._TemporaryFileWrapper, deob_tool_name: str):
         """Add a child binary and if there are any issues log a warning."""
         if os.stat(file_ref.name).st_size == 0:
             self.logger.warning(
                 f"The tool {deob_tool_name} failed to add a child binary because the output file has no contents."
             )
-            return False
 
         file_ref.seek(0)
         self.add_data_file(DataLabel.DEOB_JS, {}, file_ref)
 
-    def is_file_valid(self, fileObj: tempfile._TemporaryFileWrapper) -> bool:
+    def is_file_valid(self, fileObj: tempfile._TemporaryFileWrapper) -> tuple[bool, str]:
         """Check deobfuscated file has at least one newline, and has content. Return false if it doesn't."""
         # If the first line is longer than 10kb it's probably not useful anyway.
         # Note the number parameter in readlines() is the number of bytes before the code stops searching for newlines.
@@ -90,7 +89,7 @@ class AzulPluginJsDeobf(BinaryPlugin):
         if file_bytes == 0:
             return False, "0 file length"
 
-        return True, None
+        return True, ""
 
     def get_bracket_hash(self, file) -> str:
         """Using a regular expression, determine the bracket layout of a file."""
@@ -99,12 +98,12 @@ class AzulPluginJsDeobf(BinaryPlugin):
         try:
             bracket_structure = "".join(re.findall(r"[{}\[\]()]", str(file)))
             if bracket_structure == "":
-                return False
+                return ""
             else:
                 md5_hash = hashlib.md5((bracket_structure).encode("utf-8")).hexdigest()  # noqa: S324
                 return str(md5_hash)
         except Exception:
-            return False
+            return ""
 
     def execute(self, job: Job):
         """Run the plugin."""

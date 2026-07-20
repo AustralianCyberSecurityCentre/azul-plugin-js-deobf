@@ -1,8 +1,6 @@
 """Test cases for plugin output."""
 
-import datetime
-
-from azul_runner import FV, DataLabel, Event, EventData, JobResult, State, test_template
+from azul_runner import FV, Event, EventData, JobResult, State, test_template
 
 from azul_plugin_js_deobf.main import AzulPluginJsDeobf
 
