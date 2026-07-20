@@ -7,8 +7,8 @@ import re
 import subprocess  # nosec B404
 import tempfile
 
-import rjsmin  # ty: ignore[unresolved-import] false positive
-from azul_runner import (  # ty: ignore[unresolved-import] false positive
+import rjsmin
+from azul_runner import (
     BinaryPlugin,
     DataLabel,
     Feature,
