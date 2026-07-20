@@ -2,7 +2,7 @@
 
 import datetime
 
-from azul_runner import FV, DataLabel, Event, EventData, JobResult, State, test_template
+from azul_runner import FV, DataLabel, Event, EventData, JobResult, State, test_template  # ty: ignore[unresolved-import] false positive
 
 from azul_plugin_js_deobf.main import AzulPluginJsDeobf
 
