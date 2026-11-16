@@ -6,7 +6,7 @@ import os
 import subprocess
 import sys
 
-from hatchling.builders.hooks.plugin.interface import (  # ty: ignore[unresolved-import] false positive
+from hatchling.builders.hooks.plugin.interface import (  # ty: ignore[import-not-found] false positive
     BuildHookInterface,
 )
 
